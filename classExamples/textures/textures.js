@@ -1,81 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>TEST!</title>
-
-    <script type="text/javascript" src="../.lib/gl-matrix-min.js">
-    </script>
-
-    <!--Vertex shader--->
-    <script
-            id="shader-vs"
-            type="x-shader/x-vertex">
-    /////////////////////////////////////////////
-    // VERTEX SHADER START
-    /////////////////////////////////////////////
-    // attributes are inputs for each vertex
-    // different for each vertex in rendering call
-
-    //input: vertex position
-    attribute vec3 aVertexPosition; // to hold coordinates of vertices (3)
-	attribute vec4 aVertexColor;	// to hold color values for each point
-
-    // uniforms are inputs for all vertices
-    // same for all vertices in any rendering call
-    uniform mat4 uMVMatrix; // model view matrix
-    uniform mat4 uPMatrix; // perspective matrix
-
-    varying vec4 vColor;
-    void main(void) {
-        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
-
-        // pass vertexColor to fragmentShader
-        vColor = aVertexColor;
-
-    }
-
-
-    /////////////////////////////////////////////
-    // VERTEX SHADER END
-    /////////////////////////////////////////////
-
-    </script>
-
-
-    <!--Fragment shader--->
-    <script
-            id="shader-fs"
-            type="x-shader/x-fragment">
-    /////////////////////////////////////////////
-    // FRAGMENT SHADER START
-    /////////////////////////////////////////////
-	
-	precision mediump float;
-
-	varying vec4 vColor;
-	
-    void main(void) {
-        //gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); // rgba
-       	gl_FragColor = vColor;
-    }
-
-
-    /////////////////////////////////////////////
-    // FRAGMENT SHADER END
-    /////////////////////////////////////////////
-
-
-    </script>
-
-
-    <!--Javascript app--->
-    <script
-            type="text/javascript">
         var gl;
         //var shaderprogram;
 
-        <!-- initGL() -->
+        //<!-- initGL() -->
         function initGL(canvas) {
             try {
                 gl = canvas.getContext("experimental-webgl");
@@ -136,7 +62,7 @@
         }
 
 
-        <!-- initShaders() -->
+        //<!-- initShaders() -->
         var shaderprogram;
 
         function initShaders() {
@@ -170,6 +96,7 @@
             shaderProgram.mvMatrixUniform =
                 gl.getUniformLocation(shaderProgram, "uMVMatrix");
 
+            shaderprogram.texture
 
 			shaderProgram.vertexColorAttribute =
 				gl.getAttribLocation(shaderProgram, "aVertexColor");
@@ -178,41 +105,61 @@
 			
         }
 
-        <!-- initBuffers() -->
+        //<!-- initBuffers() -->
         function initBuffers() {
-            // We will generate geometry with this function
-            triangleVertexPositionBuffer = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
 
-            var vertices = [
-                0.0, 1.0, 0.0,
-                -1.0, -1.0, 0.0,
-                1.0, -1.0, 0.0,
-            ];
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-            triangleVertexPositionBuffer.itemSize = 3;
-            triangleVertexPositionBuffer.numItems = 3;
-            
-            triangleVertexColorBuffer = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexColorBuffer);
-            var colors = [
-				1.0,  0.0,  0.0, 1,
-				0.0,  1.0,  0.0, 1,
-				0.0,  0.0,  1.0, 1];
-			
-			gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-			triangleVertexColorBuffer.itemSize = 4;
-			triangleVertexColorBuffer.numItems = 3;
-			
+            // Sphere
+            var sRadius = 4;
+            var slices = 25;
+            var stacks = 12;    // number of latitudinal squares around equator
+            var sVertices = [];
+            var count = 0;
+
+            var phi1 = ((t)/stacks) * Math.PI;
+            var phi2 = ((t+1)/stacks) * Math.PI;
+
+            for(p = 0; p < slices + 1; p++ ) {  // +1 moves down a row
+                var theta = ((p)/slices) * 2 * Math.PI;
+                var xVal = sRadius * Math.cos(theta) * Math.sin(phi1);
+                var yVal = sRadius * Math.cos(theta) * Math.sin(phi2);
+                var zVal = sRadius * Math.cos(phi1);
+                sVertices = sVertices.concat([xVal, yVal, zVal]);
+            }
+
+            sphereVertexPositionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, sphereVertexPositionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(sVertices), gl.STATIC_DRAW);
+            sphereVertexPositionBuffer.itemSize = 3;
+            sphereVertexPositionBuffer.numItems = stacks * (slices + 1) * 2;
+
+
+
+            var textureCoords = [];
+            for(t = 0; t < stacks; t++) {
+                var phi1 = t / stacks;
+                var phi2 = (t+1) / stacks;
+                for(p = 0; p < slices + 1; p++) {
+                    var theta = 1 - (p / slices);
+                    textureCoords = textureCoords.concat([theta, phi1]);
+                    textureCoords = textureCoords.concat([theta, phi2]);
+                }
+            }
+            sphereVertexTextureCoordBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, sphereVertexTextureCoordBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoords), gl.STATIC_DRAW);
+            sphereVertexTextureCoordBuffer.itemSize = 2;
+            sphereVertexTextureCoordBuffer.numItems = stacks * (slices + 1) * 2;
+            gl.bindBuffer(gl.ARRAY_BUFFER, null);
+
         }
 
-        <!-- setMatrixUniforms() -->
+        //<!-- setMatrixUniforms() -->
         function setMatrixUniforms() {
             gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
             gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
         }
 
-        <!-- drawScene() -->
+        //<!-- drawScene() -->
         var mvMatrix = mat4.create();
         var pMatrix = mat4.create();
 
@@ -228,23 +175,25 @@
                 gl.viewportHeight, 0.1, 100.0);
 
             //////////////Load in Triangle Vertices
-            gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
+            gl.bindBuffer(gl.ARRAY_BUFFER, sphereVertexPositionBuffer);
 
             gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute,
-				triangleVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+				sphereVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-			// Working on color data
-			gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexColorBuffer);
+			// Working on texture data
+			gl.bindBuffer(gl.ARRAY_BUFFER, sphereVertexTextureCoordBuffer);
 			
 			// set color in vertex shader
 			gl.vertexAttribPointer(shaderProgram.vertexColorAttribute,
-				triangleVertexColorBuffer.itemSize, gl.FLOAT, false, 0,0);
+				sphereVertexTextureCoordBuffer.itemSize, gl.FLOAT, false, 0,0);
 			
 			
 
             setMatrixUniforms();
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE2D, worldTexture);
+            gl.uniform1i();
 
-            gl.drawArrays(gl.TRIANGLES, 0, triangleVertexPositionBuffer.numItems);
 
         }
 
@@ -254,7 +203,7 @@
         mat4.translate(mvMatrix, mvMatrix, [0, 0, -7.0]);
 
 
-        <!-- webGLStart() -->
+        //<!-- webGLStart() -->
         function webGLStart() {
             var canvas = document.getElementById("lesson02-canvas");
 
@@ -271,17 +220,24 @@
             gl.enable(gl.DEPTH_TEST);
             drawScene();
         }
+        
+        //<!-- initTexture() -->
+        function initTexture() {
+			worldTexture = gl.createTexture();
+			worldTexture.image = new Image();
+			
+			
+		}
+		
+		
+		function handleLoadedTexture() {
+			gl.bindTexture(gl.TEXTURE_2D, texture);
+			gl.pixel.Storei(gl.UNPACK_FLIP_Y_WEBGL, true);
+			gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture.image);
+            gl.texParameteri(gl.TEXTURE_2D, )
+            gl.tex
+            gl.bindTexture()
+		}
 
-    </script>
 
-</head>
-<body
-        onload="webGLStart();">
-<canvas
-        id="lesson02-canvas"
-        style="boarder: none;">
-</canvas>
 
-</body>
-
-</html>

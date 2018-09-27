@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Project 1</title>
+
+    <script type="text/javascript" src="../.lib/gl-matrix-min.js">
+    </script>
+    
+    <script type="text/javascript" src="../.lib/webgl-utils.js">
+    </script>
+
+    <!--Vertex shader--->
+    <script
+            id="shader-vs"
+            type="x-shader/x-vertex">
+    /////////////////////////////////////////////
+    // VERTEX SHADER START
+    /////////////////////////////////////////////
+    // attributes are inputs for each vertex
+    // different for each vertex in rendering call
+
+    //input: vertex position
+    attribute vec3 aVertexPosition; // to hold coordinates of vertices (3)
+	attribute vec4 aVertexColor;	// to hold color values for each point
+
+    // uniforms are inputs for all vertices
+    // same for all vertices in any rendering call
+    uniform mat4 uMVMatrix; // model view matrix
+    uniform mat4 uPMatrix; // perspective matrix
+
+    varying vec4 vColor;
+    void main(void) {
+        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+
+        // pass vertexColor to fragmentShader
+        vColor = aVertexColor;
+        gl_PointSize = 10.0;
+
+    }
+
+
+    /////////////////////////////////////////////
+    // VERTEX SHADER END
+    /////////////////////////////////////////////
+
+    </script>
+
+
+    <!--Fragment shader--->
+    <script
+            id="shader-fs"
+            type="x-shader/x-fragment">
+    /////////////////////////////////////////////
+    // FRAGMENT SHADER START
+    /////////////////////////////////////////////
+	
+	precision mediump float;
+
+	varying vec4 vColor;
+	
+    void main(void) {
+        //gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); // rgba
+       	gl_FragColor = vColor;
+    }
+
+
+    /////////////////////////////////////////////
+    // FRAGMENT SHADER END
+    /////////////////////////////////////////////
+
+
+    </script>
+
+
+    <!--Javascript app--->
+    <script
+            type="text/javascript" src = p1.js>
+    </script>
+
+</head>
+<body
+        onload="webGLStart();">
+<canvas
+        id="lesson02-canvas"
+        style="boarder: none;">
+</canvas>
+
+</body>
+
+</html>
