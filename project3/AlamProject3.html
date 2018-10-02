@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=windows-1252">
+    <title>Project 2: Animation and User Input</title>
+
+    <style>
+        .container {
+            position: relative;
+        }
+
+        #overlay {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            color: white;
+        }
+    </style>
+
+    <!-- get gl-matrix-min library -->
+    <script type="text/javascript" src="../.lib/gl-matrix-min.js"></script>
+
+    <!-- get the webgl-utils library -->
+    <script type="text/javascript" src="../.lib/webgl-utils.js"></script>
+
+    <!-- FRAGMENT SHADER -->
+    <script id="shader-fs" type="x-shader/x-fragment">
+      
+      // sets precision of vColor
+      precision mediump float;
+      
+      // the variable labeled varying is input
+      // vColor is interpolated over vertices
+      varying vec4 vColor;
+      
+      
+      void main(void){
+        //gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+        
+        // assign the pixel color to the interpolated color
+        gl_FragColor = vColor;
+      }
+    
+
+
+
+
+    </script>
+
+    <!-- VERTEX SHADER -->
+    <script id="shader-vs" type="x-shader/x-vertex">
+    
+      // input: vertex position
+      attribute vec3 aVertexPosition;
+      
+      // vertex color
+      attribute vec4 aVertexColor;
+      
+      // declare vColor
+      varying vec4 vColor;
+      
+      // uniforms are inputs provided for ALL verticies,
+      // the same for all verticies in any rendering call
+      uniform mat4 uMVMatrix; // model view matrix
+      uniform mat4 uPMatrix;  // perspective matrix
+      
+      void main(void){
+        gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+        
+        // pass vertex color to fragment shader
+        vColor = aVertexColor;
+        
+        // set point size
+        gl_PointSize = 10.0;
+        
+      }  
+    
+
+
+
+
+    </script>
+
+    <!-- JAVASCRIPT APPLICATION -->
+    <script type="text/javascript" src="p3.js"></script>
+
+</head>
+
+<body onload="webGLStart();">
+
+<canvas id="canvas" style="boarder: none;"></canvas>
+
+<div id="overlay">
+    <div>fps: <span id="framerate">0</span></div>
+    <div>x: <span id="posX">0</span></div>
+    <div>y: <span id="posY">0</span></div>
+    <div>z: <span id="posZ">-15</span></div>
+    <div>xRot: <span id="rotX">6</span></div>
+    <div>yRot: <span id="rotY">0</span></div>
+    <div>zRot: <span id="rotZ">0</span></div>
+</div>
+
+
+</body>
+
+<div>Controls:</div>
+<div>Arrow keys for x and y position</div>
+<div>W and S for z position</div>
+<div>Mouse for rotation</div>
+
+</html>
